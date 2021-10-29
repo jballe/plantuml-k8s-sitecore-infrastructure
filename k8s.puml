@@ -1,0 +1,95 @@
+@startuml 
+
+scale max 1024 width
+
+skinparam nodesep 10
+skinparam ranksep 10
+
+!ifndef NAMESPACE
+!define NAMESPACE test-cby-master
+!endif
+'!define IS_PROD
+
+' Azure
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/2-1/dist
+
+!include <azure/AzureCommon>
+!include <azure/AzureSimplified>
+
+!include AzurePuml/Containers/AzureContainerRegistry.puml
+!include AzurePuml/Containers/AzureKubernetesService.puml
+!include AzurePuml/Databases/AzureCosmosDb.puml
+!include AzurePuml/Databases/AzureSqlDatabase.puml
+!include AzurePuml/DevOps/AzurePipelines.puml
+!include AzurePuml/Identity/AzureActiveDirectory.puml
+!include AzurePuml/Networking/AzureLoadBalancer.puml
+!include AzurePuml/Security/AzureKeyVault.puml
+
+' Kubernetes
+!define KubernetesPuml https://raw.githubusercontent.com/dcasati/kubernetes-PlantUML/master/dist
+
+!include KubernetesPuml/kubernetes_Common.puml
+!include KubernetesPuml/kubernetes_Context.puml
+!include KubernetesPuml/kubernetes_Simplified.puml
+
+!include KubernetesPuml/OSS/KubernetesApi.puml
+!include KubernetesPuml/OSS/KubernetesIng.puml
+!include KubernetesPuml/OSS/KubernetesPod.puml
+
+' stdlib
+!include <tupadr3/common>
+!include <tupadr3/devicons/firefox>
+
+AzureEntityColoring(othericon)
+AzureEntityColoring(DEV_FIREFOX)
+
+!define AzureRegion "Europe"
+
+
+DEV_FIREFOX(browser, "Client Apps")
+
+
+' Azure Components
+AzureContainerRegistry(acr, "ACR\nContainer Registry", AzureRegion)
+AzureLoadBalancer(alb, "Load Balancer", AzureRegion)
+AzurePipelines(ado, "CI/CD\nAzure Pipelines", "Global")
+
+
+' Kubernetes Components
+Cluster_Boundary(cluster, "Kubernetes Cluster") {
+    AzureKubernetesService(aksdc1, "aksdc1", "Azure Kubernetes") {
+        KubernetesApi(KubernetesApi, "Kubernetes API", "")
+
+        Namespace_Boundary(ns, NAMESPACE) {
+            KubernetesIng(ingress, "ingress", "")
+
+            KubernetesPod(k8sCm, "cby-cm", "")
+            KubernetesPod(k8sCd, "cby-cd", "")
+            KubernetesPod(k8sSolr, "cby-solr", "")
+            !ifndef IS_PROD
+            KubernetesPod(sql, "cby-sql", "")
+            !endif
+        }
+    }
+}
+
+Rel_U(ado, KubernetesApi, "helm upgrade\n<img:https://codeblog.dotsandbrackets.com/wp-content/uploads/2018/07/helm-logo.jpg{scale=0.04}>")
+
+Rel_D(browser, alb, "HTTP", "ASYNC")
+Rel_D(alb, ingress, "HTTP", "ASYNC")
+
+Rel(ingress, k8sCm, " ")
+Rel(ingress, k8sCd, " ")
+Rel_D(k8sCm, k8sSolr, " ")
+Rel_D(k8sCd, k8sSolr, " ")
+
+!ifdef IS_PROD
+AzureSqlDatabase(sql, "Azure SQL", AzureRegion)
+!endif
+
+Rel_U(k8sCm, sql, " ")
+Rel_U(k8sCd, sql, " ")
+
+Rel_U(ado, acr, "docker push")
+Rel_D(KubernetesApi, acr, "docker pull")
+@enduml

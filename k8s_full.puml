@@ -1,0 +1,78 @@
+@startuml kubernetes_full
+
+scale max 1024 width
+!define IS_PROD
+
+!define NAMESPACE prod-cby-master
+!include k8s.puml
+
+'' duplicated
+DEV_FIREFOX(Test_browser, "Client Apps")
+
+Cluster_Boundary(cluster, "Kubernetes Cluster") {
+    AzureKubernetesService(aksdc1, "aksdc1", "Azure Kubernetes") {
+
+        Namespace_Boundary(Test_ns, "test-cby-master") {
+            KubernetesIng(Test_ingress, "ingress", "")
+
+            KubernetesPod(Test_k8sCm, "cby-cm", "")
+            KubernetesPod(Test_k8sCd, "cby-cd", "")
+            KubernetesPod(Test_k8sSolr, "cby-solr", "")
+            KubernetesPod(Test_sql, "cby-sql", "")
+        }
+    }
+}
+
+Rel_D(Test_browser, alb, "HTTP", "ASYNC")
+Rel_D(alb, Test_ingress, "HTTP", "ASYNC")
+
+Rel(Test_ingress, Test_k8sCm, " ")
+Rel(Test_ingress, Test_k8sCd, " ")
+Rel_D(Test_k8sCm, Test_k8sSolr, " ")
+Rel_D(Test_k8sCd, Test_k8sSolr, " ")
+
+Rel_D(Test_k8sCm, Test_sql, " ")
+Rel_D(Test_k8sCd, Test_sql, " ")
+
+'' duplicated
+
+!define Namespace_Dashed_Boundary(e_alias, e_label) rectangle "==e_label\n<size:TECHN_FONT_SIZE>[Namespace]</size>" <<namespace_dashed>> as e_alias
+skinparam rectangle<<namespace_dashed>> {
+    StereotypeFontColor KUBERNETES_FONT_COLOR
+    FontColor KUBERNETES_FONT_COLOR
+    BorderStyle dashed
+    BorderColor KUBERNETES_NS_COLOR
+    BackgroundColor KUBERNETES_BACKGROUND_COLOR
+    RoundCorner 25
+}
+
+
+Cluster_Boundary(cluster, "Kubernetes Cluster") {
+    AzureKubernetesService(aksdc1, "aksdc1", "Azure Kubernetes") {
+
+        Namespace_Dashed_Boundary(feat_ns, "test-cby-feature1") {
+            KubernetesIng(feat_ingress, "ingress", "")
+
+            KubernetesPod(feat_k8sCm, "cby-cm", "")
+            KubernetesPod(feat_k8sCd, "cby-cd", "")
+            KubernetesPod(feat_k8sSolr, "cby-solr", "")
+            KubernetesPod(feat_sql, "cby-sql", "")
+        }
+    }
+}
+
+'Rel_D(feat_browser, alb, "HTTP", "ASYNC")
+'Rel_D(alb, feat_ingress, "HTTP", "ASYNC")
+
+Rel(feat_ingress, feat_k8sCm, " ")
+Rel(feat_ingress, feat_k8sCd, " ")
+Rel_D(feat_k8sCm, feat_k8sSolr, " ")
+Rel_D(feat_k8sCd, feat_k8sSolr, " ")
+
+Rel_D(feat_k8sCm, feat_sql, " ")
+Rel_D(feat_k8sCd, feat_sql, " ")
+
+
+' ns -[hidden]- Test_ns
+alb -[hidden]- feat_ns
+@enduml

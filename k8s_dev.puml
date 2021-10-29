@@ -1,0 +1,10 @@
+@startuml kubernetes_dev
+
+scale max 1024 width
+!define IS_DEV
+
+!define NAMESPACE test-cby-master
+!include k8s.puml
+
+
+@enduml
