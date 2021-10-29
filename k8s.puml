@@ -35,6 +35,8 @@ skinparam ranksep 10
 !include KubernetesPuml/OSS/KubernetesApi.puml
 !include KubernetesPuml/OSS/KubernetesIng.puml
 !include KubernetesPuml/OSS/KubernetesPod.puml
+!include KubernetesPuml/OSS/KubernetesPvc.puml
+!include KubernetesPuml/OSS/KubernetesVol.puml
 
 ' stdlib
 !include <tupadr3/common>
@@ -66,8 +68,17 @@ Cluster_Boundary(cluster, "Kubernetes Cluster") {
             KubernetesPod(k8sCm, "cby-cm", "")
             KubernetesPod(k8sCd, "cby-cd", "")
             KubernetesPod(k8sSolr, "cby-solr", "")
+            KubernetesPvc(solrpvc, "solr-pvc", "Persisted Volume Claim")
+            Rel(k8sSolr, solrpvc, " ")
+            KubernetesVol(solrpv, "solr-pv", "Persisted Volume")
+            Rel(solrpvc, solrpv, " ")
+
             !ifndef IS_PROD
-            KubernetesPod(sql, "cby-sql", "")
+                KubernetesPod(sql, "cby-sql", "")
+                KubernetesPvc(sqlpvc, "sql-pvc", "Persisted Volume")
+                Rel(sql, sqlpvc, " ")
+                KubernetesVol(sqlpv, "sql-pv", "Persisted Volume")
+                Rel(sqlpvc, sqlpv, " ")
             !endif
         }
     }
@@ -84,11 +95,15 @@ Rel_D(k8sCm, k8sSolr, " ")
 Rel_D(k8sCd, k8sSolr, " ")
 
 !ifdef IS_PROD
-AzureSqlDatabase(sql, "Azure SQL", AzureRegion)
+    AzureSqlDatabase(sql, "Azure SQL", AzureRegion)
+    Rel_U(k8sCm, sql, " ")
+    Rel_U(k8sCd, sql, " ")
+!else
+    Rel(k8sCm, sql, " ")
+    Rel(k8sCd, sql, " ")
+
 !endif
 
-Rel_U(k8sCm, sql, " ")
-Rel_U(k8sCd, sql, " ")
 
 Rel_U(ado, acr, "docker push")
 Rel_D(KubernetesApi, acr, "docker pull")

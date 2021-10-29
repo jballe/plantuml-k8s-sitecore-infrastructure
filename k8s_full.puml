@@ -19,6 +19,16 @@ Cluster_Boundary(cluster, "Kubernetes Cluster") {
             KubernetesPod(Test_k8sCd, "cby-cd", "")
             KubernetesPod(Test_k8sSolr, "cby-solr", "")
             KubernetesPod(Test_sql, "cby-sql", "")
+            KubernetesPvc(Test_solrpvc, "solr-pvc", "Persisted Volume")
+            Rel(Test_k8sSolr, Test_solrpvc, " ")
+            KubernetesVol(Test_solrvol, "solr-vol", "Persisted Volume")
+            Rel(Test_solrpvc, Test_solrvol, " ")
+
+            KubernetesPod(Test_sql, "cby-sql", "")
+            KubernetesPvc(Test_sqlpvc, "sql-pvc", "Persisted Volume")
+            Rel(Test_sql, Test_sqlpvc, " ")
+            KubernetesVol(Test_sqlvol, "sql-vol", "Persisted Volume")
+            Rel(Test_sqlpvc, Test_sqlvol, " ")
         }
     }
 }
@@ -57,6 +67,17 @@ Cluster_Boundary(cluster, "Kubernetes Cluster") {
             KubernetesPod(feat_k8sCd, "cby-cd", "")
             KubernetesPod(feat_k8sSolr, "cby-solr", "")
             KubernetesPod(feat_sql, "cby-sql", "")
+            KubernetesPvc(feat_solrpvc, "solr-pvc", "Persisted Volume")
+            Rel(feat_k8sSolr, feat_solrpvc, " ")
+            KubernetesVol(feat_solrvol, "solr-pv", "Persisted Volume")
+            Rel(feat_solrpvc, feat_solrvol, " ")
+
+            KubernetesPod(feat_sql, "cby-sql", "")
+            KubernetesPvc(feat_sqlpvc, "sql-pvc", "Persisted Volume")
+            Rel(feat_sql, feat_sqlpvc, " ")
+            KubernetesVol(feat_sqlvol, "sql-vol", "Persisted Volume")
+            Rel(feat_sqlpvc, feat_sqlvol, " ")
+
         }
     }
 }
