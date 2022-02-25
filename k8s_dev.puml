@@ -1,10 +1,9 @@
 @startuml kubernetes_dev
 
 scale max 1024 width
-!define IS_DEV
+!$IS_DEV = %true()
+!$NAMESPACE = "test-cby-master"
 
-!define NAMESPACE test-cby-master
 !include k8s.puml
-
 
 @enduml

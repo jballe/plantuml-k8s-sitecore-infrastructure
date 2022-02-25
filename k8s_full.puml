@@ -1,99 +1,52 @@
 @startuml kubernetes_full
 
 scale max 1024 width
-!define IS_PROD
 
-!define NAMESPACE prod-cby-master
-!include k8s.puml
+!$PROJECT_NAME = "skat"
+!$USE_IS_PROD = %true()
+!$USE_RENDERINGHOST = %true()
+!$USE_APPINSIGHTS = %true()
+!$INCLUDE_INFRASTRUCTURE = %true()
 
-'' duplicated
-DEV_FIREFOX(Test_browser, "Client Apps")
+!includesub k8s.puml!DEFAULTS
+!includesub k8s.puml!IMPORTS
+
+!includesub k8s.puml!AZURE_COMPONENTS
 
 Cluster_Boundary(cluster, "Kubernetes Cluster") {
-    AzureKubernetesService(aksdc1, "aksdc1", "Azure Kubernetes") {
+    AzureKubernetesService(aksdc1, "AKS", "Azure Kubernetes") {
+        KubernetesApi(KubernetesApi, "Kubernetes API", "")
 
-        Namespace_Boundary(Test_ns, "test-cby-master") {
-            KubernetesIng(Test_ingress, "ingress", "")
+        !$NS_KEY_PREFIX = "feat"
+        !$IS_PROD = %false()
+        Namespace_Dashed_Boundary($NS_KEY_PREFIX##_ns, "test-$PROJECT_NAME-feature1") {
+            !includesub k8s.puml!NS_SECTION
+        }
 
-            KubernetesPod(Test_k8sCm, "cby-cm", "")
-            KubernetesPod(Test_k8sCd, "cby-cd", "")
-            KubernetesPod(Test_k8sSolr, "cby-solr", "")
-            KubernetesPod(Test_sql, "cby-sql", "")
-            KubernetesPvc(Test_solrpvc, "solr-pvc", "Persisted Volume")
-            Rel(Test_k8sSolr, Test_solrpvc, " ")
-            KubernetesVol(Test_solrvol, "solr-vol", "Persisted Volume")
-            Rel(Test_solrpvc, Test_solrvol, " ")
+        !$NS_KEY_PREFIX = "develop"
+        !$IS_PROD = %false()
+        Namespace($NS_KEY_PREFIX##_ns, "test-$PROJECT_NAME-develop") {
+            !includesub k8s.puml!NS_SECTION
+        }
 
-            KubernetesPod(Test_sql, "cby-sql", "")
-            KubernetesPvc(Test_sqlpvc, "sql-pvc", "Persisted Volume")
-            Rel(Test_sql, Test_sqlpvc, " ")
-            KubernetesVol(Test_sqlvol, "sql-vol", "Persisted Volume")
-            Rel(Test_sqlpvc, Test_sqlvol, " ")
+        !$NS_KEY_PREFIX = "test"
+        !$IS_PROD = %false()
+        Namespace($NS_KEY_PREFIX##_ns, "test-$PROJECT_NAME-master") {
+            !includesub k8s.puml!NS_SECTION
+        }
+
+        !$NS_KEY_PREFIX = "prod"
+        !$IS_PROD = %true()
+        Namespace($NS_KEY_PREFIX##_ns, "prod-$PROJECT_NAME-master") {
+            !includesub k8s.puml!NS_SECTION
         }
     }
 }
 
-Rel_D(Test_browser, alb, "HTTP", "ASYNC")
-Rel_D(alb, Test_ingress, "HTTP", "ASYNC")
 
-Rel(Test_ingress, Test_k8sCm, " ")
-Rel(Test_ingress, Test_k8sCd, " ")
-Rel_D(Test_k8sCm, Test_k8sSolr, " ")
-Rel_D(Test_k8sCd, Test_k8sSolr, " ")
+!includesub k8s.puml!AZURE_COMPONENTS_RELATIONS
 
-Rel_D(Test_k8sCm, Test_sql, " ")
-Rel_D(Test_k8sCd, Test_sql, " ")
-
-'' duplicated
-
-!define Namespace_Dashed_Boundary(e_alias, e_label) rectangle "==e_label\n<size:TECHN_FONT_SIZE>[Namespace]</size>" <<namespace_dashed>> as e_alias
-skinparam rectangle<<namespace_dashed>> {
-    StereotypeFontColor KUBERNETES_FONT_COLOR
-    FontColor KUBERNETES_FONT_COLOR
-    BorderStyle dashed
-    BorderColor KUBERNETES_NS_COLOR
-    BackgroundColor KUBERNETES_BACKGROUND_COLOR
-    RoundCorner 25
-}
+!includesub k8s.puml!INFRASTRUCTURE_PIPELINE
 
 
-Cluster_Boundary(cluster, "Kubernetes Cluster") {
-    AzureKubernetesService(aksdc1, "aksdc1", "Azure Kubernetes") {
-
-        Namespace_Dashed_Boundary(feat_ns, "test-cby-feature1") {
-            KubernetesIng(feat_ingress, "ingress", "")
-
-            KubernetesPod(feat_k8sCm, "cby-cm", "")
-            KubernetesPod(feat_k8sCd, "cby-cd", "")
-            KubernetesPod(feat_k8sSolr, "cby-solr", "")
-            KubernetesPod(feat_sql, "cby-sql", "")
-            KubernetesPvc(feat_solrpvc, "solr-pvc", "Persisted Volume")
-            Rel(feat_k8sSolr, feat_solrpvc, " ")
-            KubernetesVol(feat_solrvol, "solr-pv", "Persisted Volume")
-            Rel(feat_solrpvc, feat_solrvol, " ")
-
-            KubernetesPod(feat_sql, "cby-sql", "")
-            KubernetesPvc(feat_sqlpvc, "sql-pvc", "Persisted Volume")
-            Rel(feat_sql, feat_sqlpvc, " ")
-            KubernetesVol(feat_sqlvol, "sql-vol", "Persisted Volume")
-            Rel(feat_sqlpvc, feat_sqlvol, " ")
-
-        }
-    }
-}
-
-'Rel_D(feat_browser, alb, "HTTP", "ASYNC")
-'Rel_D(alb, feat_ingress, "HTTP", "ASYNC")
-
-Rel(feat_ingress, feat_k8sCm, " ")
-Rel(feat_ingress, feat_k8sCd, " ")
-Rel_D(feat_k8sCm, feat_k8sSolr, " ")
-Rel_D(feat_k8sCd, feat_k8sSolr, " ")
-
-Rel_D(feat_k8sCm, feat_sql, " ")
-Rel_D(feat_k8sCd, feat_sql, " ")
-
-
-' ns -[hidden]- Test_ns
-alb -[hidden]- feat_ns
 @enduml

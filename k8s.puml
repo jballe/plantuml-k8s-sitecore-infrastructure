@@ -1,28 +1,23 @@
 @startuml 
 
+!startsub DEFAULTS
 scale max 1024 width
 
 skinparam nodesep 10
 skinparam ranksep 10
 
 ' defaults
-!ifndef NAMESPACE
-!define NAMESPACE test-sitecore-master
-!endif
-!ifndef PROJECT_NAME
-!define PROJECT_NAME skat
-!endif
-!ifndef CLUSTER_NAME
-!define CLUSTER_NAME aksdc1
-!endif
-!ifndef NS_KEY_PREFIX
-!define NS_KEY_PREFIX k8s
-!endif
-'!define IS_PROD
-!define USE_RENDERINGHOST
-!define USE_APPINSIGHTS
+!$NAMESPACE ?= "test-sitecore-master"
+!$PROJECT_NAME ?= "k8s"
+!$CLUSTER_NAME ?= "aksdc1"
+!$NS_KEY_PREFIX ?= "k8s"
+!$IS_PROD ?= %true()
+!$USE_RENDERINGHOST ?= %true()
+!$USE_APPINSIGHTS ?= %true()
+!$INCLUDE_INFRASTRUCTURE ?= %false()
+!endsub
 
-
+!startsub IMPORTS
 ' Azure
 !define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/2-1/dist
 
@@ -57,8 +52,25 @@ skinparam ranksep 10
 !include <tupadr3/common>
 !include <tupadr3/devicons/firefox>
 
+!define KUBERNETES_NS_COLOR black
 AzureEntityColoring(DEV_FIREFOX)
 
+!define Namespace_Dashed_Boundary(e_alias, e_label) rectangle "==e_label\n<size:TECHN_FONT_SIZE>[Namespace]</size>" <<namespace_dashed>> as e_alias
+skinparam rectangle<<namespace>> {
+   BorderColor KUBERNETES_NS_COLOR
+ }
+skinparam rectangle<<namespace_dashed>> {
+    StereotypeFontColor KUBERNETES_FONT_COLOR
+    FontColor KUBERNETES_FONT_COLOR
+    BorderStyle dashed
+    BorderColor KUBERNETES_NS_COLOR
+    BackgroundColor KUBERNETES_BACKGROUND_COLOR
+    RoundCorner 25
+}
+
+!endsub
+
+!startsub AZURE_COMPONENTS
 
 DEV_FIREFOX(browser, "Client Apps")
 
@@ -67,98 +79,102 @@ AzureContainerRegistry(acr, "ACR\nContainer Registry", AzureRegion)
 AzureLoadBalancer(alb, "Load Balancer", AzureRegion)
 AzurePipelines(ado_solution, "CI/CD\nAzure Pipelines\nsolution", "Global")
 
-!ifdef USE_APPINSIGHTS
+!if ($IS_PROD == %true())
+    AzureSqlDatabase(sql, "Azure SQL", AzureRegion)
+!endif
+
+!if ($USE_APPINSIGHTS == %true())
 AzureApplicationInsights(insights, "Application Insights", " ")
 !endif
 
-
-!startsub AZURESQLDB
-!ifdef IS_PROD
-    AzureSqlDatabase(sql, "Azure SQL", AzureRegion)
-!endif
 !endsub
+
 
 ' Kubernetes Components
 Cluster_Boundary(cluster, "Azure Kubernetes Cluster") {
-    AzureKubernetesService(aksdc1, "CLUSTER_NAME", "Azure Kubernetes Cluster") {
+    AzureKubernetesService(aksdc1, "$CLUSTER_NAME", "Azure Kubernetes Cluster") {
         KubernetesApi(KubernetesApi, "Kubernetes API", "")
 
-        Namespace(NS_KEY_PREFIX##_ns, NAMESPACE) {
+        Namespace($NS_KEY_PREFIX##_ns, "$NAMESPACE") {
 
             !startsub NS_SECTION
-            KubernetesIng(NS_KEY_PREFIX##_ingress, "ingress", "")
+            KubernetesIng($NS_KEY_PREFIX##_ingress, "ingress", "")
 
-            KubernetesPod(NS_KEY_PREFIX##_cm, "sitecore-cm", "Content Management")
-            KubernetesPod(NS_KEY_PREFIX##_cd, "sitecore-cd", "Content Delivery")
-            KubernetesPod(NS_KEY_PREFIX##_solr, "sitecore-solr", "")
-            KubernetesPvc(NS_KEY_PREFIX##_solrpvc, "solr-pvc", "Persisted Volume Claim")
-            Rel(NS_KEY_PREFIX##_solr, NS_KEY_PREFIX##_solrpvc, " ")
-            KubernetesVol(NS_KEY_PREFIX##_solrpv, "solr-pv", "Persisted Volume")
-            Rel(NS_KEY_PREFIX##_solrpvc, NS_KEY_PREFIX##_solrpv, " ")
+            KubernetesPod($NS_KEY_PREFIX##_cm, "sitecore-cm", "Content Management")
+            KubernetesPod($NS_KEY_PREFIX##_cd, "sitecore-cd", "Content Delivery")
+            KubernetesPod($NS_KEY_PREFIX##_solr, "sitecore-solr", "")
+            KubernetesPvc($NS_KEY_PREFIX##_solrpvc, "solr-pvc", "Persisted Volume Claim")
+            Rel($NS_KEY_PREFIX##_solr, $NS_KEY_PREFIX##_solrpvc, " ")
+            KubernetesVol($NS_KEY_PREFIX##_solrpv, "solr-pv", "Persisted Volume")
+            Rel($NS_KEY_PREFIX##_solrpvc, $NS_KEY_PREFIX##_solrpv, " ")
             
-            !ifndef IS_PROD
-                KubernetesPod(NS_KEY_PREFIX##_sql, "sitecore-sql", "")
-                KubernetesPvc(NS_KEY_PREFIX##_sqlpvc, "sql-pvc", "Persisted Volume")
-                Rel(NS_KEY_PREFIX##_sql, NS_KEY_PREFIX##_sqlpvc, " ")
-                KubernetesVol(NS_KEY_PREFIX##_sqlpv, "sql-pv", "Persisted Volume")
-                Rel(NS_KEY_PREFIX##_sqlpvc, NS_KEY_PREFIX##_sqlpv, " ")
+            !if ($IS_PROD == %false())
+                KubernetesPod($NS_KEY_PREFIX##_sql, "sitecore-sql", "")
+                KubernetesPvc($NS_KEY_PREFIX##_sqlpvc, "sql-pvc", "Persisted Volume")
+                Rel($NS_KEY_PREFIX##_sql, $NS_KEY_PREFIX##_sqlpvc, " ")
+                KubernetesVol($NS_KEY_PREFIX##_sqlpv, "sql-pv", "Persisted Volume")
+                Rel($NS_KEY_PREFIX##_sqlpvc, $NS_KEY_PREFIX##_sqlpv, " ")
             !endif
 
-            !ifdef USE_RENDERINGHOST
-                KubernetesPod(NS_KEY_PREFIX##_www, "sitecore-www", "Rendering host")
-                Rel(NS_KEY_PREFIX##_ingress, NS_KEY_PREFIX##_www, " ")
-                Rel(NS_KEY_PREFIX##_www, NS_KEY_PREFIX##_cd, "Layout\nservice")
-                Rel_U(NS_KEY_PREFIX##_cm, NS_KEY_PREFIX##_www, "Editing\nmode")
+            !if ($USE_RENDERINGHOST == %true())
+                KubernetesPod($NS_KEY_PREFIX##_www, "sitecore-www", "Rendering host")
+                Rel($NS_KEY_PREFIX##_ingress, $NS_KEY_PREFIX##_www, " ")
+                Rel($NS_KEY_PREFIX##_www, $NS_KEY_PREFIX##_cd, "Layout\nservice")
+                Rel_U($NS_KEY_PREFIX##_cm, $NS_KEY_PREFIX##_www, "Editing\nmode")
             !else
-                Rel(NS_KEY_PREFIX##_ingress, NS_KEY_PREFIX##_cd, " ")
+                Rel($NS_KEY_PREFIX##_ingress, $NS_KEY_PREFIX##_cd, " ")
             !endif
 
-            Rel_D(alb, NS_KEY_PREFIX##_ingress, " ", "HTTP")
-            Rel(NS_KEY_PREFIX##_ingress, NS_KEY_PREFIX##_cm, " ")
+            Rel_D(alb, $NS_KEY_PREFIX##_ingress, " ", "HTTP")
+            Rel($NS_KEY_PREFIX##_ingress, $NS_KEY_PREFIX##_cm, " ")
 
-            Rel_D(NS_KEY_PREFIX##_cm, NS_KEY_PREFIX##_solr, " ")
-            Rel_D(NS_KEY_PREFIX##_cd, NS_KEY_PREFIX##_solr, " ")
+            Rel_D($NS_KEY_PREFIX##_cm, $NS_KEY_PREFIX##_solr, " ")
+            Rel_D($NS_KEY_PREFIX##_cd, $NS_KEY_PREFIX##_solr, " ")
 
-            !ifdef IS_PROD
-                Rel_U(NS_KEY_PREFIX##_cm, sql, " ")
-                Rel_U(NS_KEY_PREFIX##_cd, sql, " ")
+            !if ($IS_PROD == %true())
+                Rel_R($NS_KEY_PREFIX##_cm, sql, " ")
+                Rel_R($NS_KEY_PREFIX##_cd, sql, " ")
             !else
-                Rel(NS_KEY_PREFIX##_cm, NS_KEY_PREFIX##_sql, " ")
-                Rel(NS_KEY_PREFIX##_cd, NS_KEY_PREFIX##_sql, " ")
+                Rel($NS_KEY_PREFIX##_cm, $NS_KEY_PREFIX##_sql, " ")
+                Rel($NS_KEY_PREFIX##_cd, $NS_KEY_PREFIX##_sql, " ")
 
             !endif
 
-            !ifdef USE_APPINSIGHTS
-            Rel(NS_KEY_PREFIX##_ns, insights, "Logs")
+            !if ($USE_APPINSIGHTS == %true())
+                $NS_KEY_PREFIX##_ns -down.-.-> insights : "Logs"
             !endif
 
             !endsub
         }
-
     }
 }
 
-Rel_U(ado_solution, KubernetesApi, " ")
+!startsub AZURE_COMPONENTS_RELATIONS
+    Rel_U(ado_solution, KubernetesApi, " ")
 
-Rel_D(browser, alb, " ", "HTTP")
+    Rel_D(browser, alb, " ", "HTTP")
 
-Rel_U(ado_solution, acr, "docker push")
-Rel_D(KubernetesApi, acr, "docker pull")
+    Rel_U(ado_solution, acr, "docker push")
+    Rel_D(KubernetesApi, acr, "docker pull")
+!endsub
 
 ' Infrastructure pipeline
-AzureVirtualMachineScaleSet(aks_pool_win, "Windows servers", "ScaleSet")
-AzureVirtualMachineScaleSet(aks_pool_linux, "Linux servers", "ScaleSet")
-AzurePipelines(ado_infrastructure, "CI/CD\nAzure Pipelines\ninfrastruktur", "Global")
-' Rel_U(ado_infrastructure, acr, "Create \nresources")
-Rel(ado_infrastructure, cluster, "Create \nresources")
-Rel(ado_infrastructure, aks_pool_win, "Create \nresources\n")
-Rel(ado_infrastructure, aks_pool_linux, "Create \nresources\n")
-cluster -.-> aks_pool_win: "Runs on"
-cluster -.-> aks_pool_linux: "Runs on"
+!if ($INCLUDE_INFRASTRUCTURE == %true())
+!startsub INFRASTRUCTURE_PIPELINE
+    AzureVirtualMachineScaleSet(aks_pool_win, "Windows servers", "ScaleSet")
+    AzureVirtualMachineScaleSet(aks_pool_linux, "Linux servers", "ScaleSet")
+    AzurePipelines(ado_infrastructure, "CI/CD\nAzure Pipelines\ninfrastruktur", "Global")
+    ' Rel_U(ado_infrastructure, acr, "Create \nresources")
+    Rel(ado_infrastructure, cluster, "Create \nresources")
+    Rel(ado_infrastructure, aks_pool_win, "Create \nresources\n")
+    Rel(ado_infrastructure, aks_pool_linux, "Create \nresources\n")
+    cluster -up.-> aks_pool_win: "Runs on"
+    cluster -up.-> aks_pool_linux: "Runs on"
 
-!ifdef USE_APPINSIGHTS
-Rel(ado_infrastructure, insights, "Create\nresource")
+    !if ($USE_APPINSIGHTS == %true())
+        Rel(ado_infrastructure, insights, "Create\nresource")
+    !endif
+!endsub
 !endif
-
 
 @enduml

@@ -1,9 +1,8 @@
 @startuml kubernetes_prod
 
 scale max 1024 width
-!define IS_PROD
-
-!define NAMESPACE prod-cby-master
+!$IS_PROD = %true()
+!$NAMESPACE = "prod-cby-master"
 
 !include k8s.puml
 
