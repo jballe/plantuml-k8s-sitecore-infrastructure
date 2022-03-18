@@ -14,6 +14,7 @@ skinparam ranksep 10
 !$IS_PROD ?= %true()
 !$USE_RENDERINGHOST ?= %true()
 !$USE_APPINSIGHTS ?= %true()
+!$USE_XP ?= %false()
 !$INCLUDE_INFRASTRUCTURE ?= %false()
 !endsub
 
@@ -56,6 +57,7 @@ skinparam ranksep 10
 AzureEntityColoring(DEV_FIREFOX)
 
 !define Namespace_Dashed_Boundary(e_alias, e_label) rectangle "==e_label\n<size:TECHN_FONT_SIZE>[Namespace]</size>" <<namespace_dashed>> as e_alias
+!define Dashed_Boundary(e_alias, e_label) rectangle "==e_label" <<namespace_dashed>> as e_alias
 skinparam rectangle<<namespace>> {
    BorderColor KUBERNETES_NS_COLOR
  }
@@ -123,6 +125,26 @@ Cluster_Boundary(cluster, "Azure Kubernetes Cluster") {
                 Rel_U($NS_KEY_PREFIX##_cm, $NS_KEY_PREFIX##_www, "Editing\nmode")
             !else
                 Rel($NS_KEY_PREFIX##_ingress, $NS_KEY_PREFIX##_cd, " ")
+            !endif
+
+            !if ($USE_XP == %true())
+                Dashed_Boundary($NS_KEY_PREFIX##_xp, "xp") {
+                    KubernetesPod($NS_KEY_PREFIX##_xconnect, "xconnect", "xconnect")
+                    KubernetesPod($NS_KEY_PREFIX##_xdbautomationworker, "xdbautomationworker", "xdbautomationworker")
+                    KubernetesPod($NS_KEY_PREFIX##_xdbsearchworker, "xdbsearchworker", "xdbsearchworker")
+                }
+
+                Rel($NS_KEY_PREFIX##_cm, $NS_KEY_PREFIX##_xconnect, " ")
+                Rel_U($NS_KEY_PREFIX##_xdbautomationworker, $NS_KEY_PREFIX##_xconnect, " ")
+                Rel($NS_KEY_PREFIX##_xconnect, $NS_KEY_PREFIX##_solr, " ")
+                Rel_U($NS_KEY_PREFIX##_xdbsearchworker, $NS_KEY_PREFIX##_solr, " ")
+
+                !if ($IS_PROD == %true())
+                    Rel($NS_KEY_PREFIX##_xdbsearchworker, sql, " ")
+                !else
+                    Rel_R($NS_KEY_PREFIX##_xdbsearchworker, $NS_KEY_PREFIX##_sql, " ")
+                !endif
+
             !endif
 
             Rel_D(alb, $NS_KEY_PREFIX##_ingress, " ", "HTTP")
