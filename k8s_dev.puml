@@ -2,7 +2,7 @@
 
 scale max 1024 width
 !$IS_DEV = %true()
-!$NAMESPACE = "test-cby-master"
+!$NAMESPACE = "test-client-master"
 
 !include k8s.puml
 

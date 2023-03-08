@@ -2,9 +2,9 @@
 
 scale max 1024 width
 
-!$PROJECT_NAME = "skat"
+!$PROJECT_NAME = "client_name_valtech"
 !$USE_IS_PROD = %true()
-!$USE_RENDERINGHOST = %true()
+!$USE_RENDERINGHOST = %false()
 !$USE_APPINSIGHTS = %true()
 !$INCLUDE_INFRASTRUCTURE = %true()
 

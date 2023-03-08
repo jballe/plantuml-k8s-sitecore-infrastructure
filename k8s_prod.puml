@@ -2,7 +2,7 @@
 
 scale max 1024 width
 !$IS_PROD = %true()
-!$NAMESPACE = "prod-cby-master"
+!$NAMESPACE = "prod-client-master"
 
 !include k8s.puml
 
