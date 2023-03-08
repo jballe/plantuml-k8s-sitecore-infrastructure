@@ -22,8 +22,8 @@ skinparam ranksep 10
 ' Azure
 !define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/2-1/dist
 
-!include <azure/AzureCommon>
-!include <azure/AzureSimplified>
+!include AzurePuml/AzureCommon.puml
+' !include AzurePuml/AzureSimplified.puml
 
 !include AzurePuml/Containers/AzureContainerRegistry.puml
 !include AzurePuml/Containers/AzureKubernetesService.puml
@@ -109,6 +109,8 @@ Cluster_Boundary(cluster, "Azure Kubernetes Cluster") {
             Rel($NS_KEY_PREFIX##_solr, $NS_KEY_PREFIX##_solrpvc, " ")
             KubernetesVol($NS_KEY_PREFIX##_solrpv, "solr-pv", "Persisted Volume")
             Rel($NS_KEY_PREFIX##_solrpvc, $NS_KEY_PREFIX##_solrpv, " ")
+            ' KubernetesPod($NS_KEY_PREFIX##_rabbit, "RabbitMQ", "")
+            ' Rel($NS_KEY_PREFIX##_cd, $NS_KEY_PREFIX##_rabbit, " ")
             
             !if ($IS_PROD == %false())
                 KubernetesPod($NS_KEY_PREFIX##_sql, "sitecore-sql", "")
